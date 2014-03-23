@@ -2,6 +2,9 @@
 # watson - inline issue manager
 # [goosecode] labs
 
+# Directories
+./
+
 # Tags
 [tags]
 fix
