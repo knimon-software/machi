@@ -13,6 +13,7 @@
     "socket.io": "*",
     "passport": "*",
     "passport-twitter": "*",
+    "passport-google": "*",
     "passport.socketio": "*"
   }
 }

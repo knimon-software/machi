@@ -5,13 +5,13 @@
 
 var express = require('express');
 var routes = require('./routes');
-var user = require('./routes/user');
 var http = require('http');
 var path = require('path');
 
 // passport configuration
-var passport = require('passport')
-   ,TwitterStrategy = require('passport-twitter').Strategy;
+var passport = require('passport'),
+    TwitterStrategy = require('passport-twitter').Strategy,
+    GoogleStrategy  = require('passport-google').Strategy;
 
 passport.serializeUser(function(userInfo,done){
    done(null,userInfo);
@@ -21,10 +21,12 @@ passport.deserializeUser(function(userInfo,done){
    done(null,userInfo);
 });
 
+// passport-twitterSetting
 passport.use(new TwitterStrategy({
+      //TODO : コンシューマキーの読み込みを別モジュールにすること
       consumerKey: process.env.TWITTER_CONSUMER_KEY,
       consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
-      callbackURL: "http://localhost:3000/auth/twitter/callback"
+      callbackURL: 'http://localhost:3000/auth/twitter/callback'
    },
    function(token, tokenSecret, profile, done){
       profile.twitter_token = token;
@@ -36,10 +38,22 @@ passport.use(new TwitterStrategy({
    }
 ));
 
+//passport-googleSetting
+passport.use(new GoogleStrategy({
+   returnURL: 'http://localhost:3000/',
+    realm: 'http://localhost:3000/'
+  },
+  function(identifier, profile, done) {
+    User.findOrCreate({ openId: identifier }, function(err, user) {
+      done(err, user);
+    });
+  }
+));
+
 //express configuration
 var app = express();
-var MemoryStore = express.session.MemoryStore
-   ,sessionStore = new MemoryStore();
+var MemoryStore = express.session.MemoryStore,
+    sessionStore = new MemoryStore();
 
 app.configure(function(){
    app.set('port', process.env.PORT || 3000);
@@ -53,7 +67,7 @@ app.configure(function(){
    app.use(express.cookieParser());
    //app.use(express.cookieParser("secret"));
    app.use(express.session({
-      secret: "secretKey",
+      secret: 'secretKey',
       store: sessionStore
    }));
    app.use(passport.initialize());
@@ -89,6 +103,7 @@ app.get('/room',isLogined,function(req,res){
 /* check authenticated */
 function isLogined(req,res,next){
    //アクセス時にroomidが付加されている場合はクッキーに保存する
+   //FIXME
    if(req.query.id){
       res.cookie('id',req.query.id);
    }
@@ -102,7 +117,7 @@ function isLogined(req,res,next){
 
 var server = http.createServer(app);
 server.listen(app.get('port'),function(){
-   console.log("Express server listening on port " + app.get('port'));
+   console.log('Express server listening on port ' + app.get('port'));
 });
 
 //socket.io configuration
@@ -112,10 +127,11 @@ var io = require('socket.io').listen(server),
 
 //クライアントからアクセスされてきたときにhandshakeDataにルームIDをセットするため処理
 //cookieにルームIDが設定されていなければ新規に部屋を作成
+//FIXME
 var Loby = io.of('/room').authorization(function(handshakeData,callback){
 
    //指定がなければIDを作成
-   var id = cookie.parse(handshakeData.headers.cookie)['id'] || generateHashString(handshakeData);
+   var id = cookie.parse(handshakeData.headers.cookie).id || generateHashString(handshakeData);
 
    handshakeData.roomId=id;
    console.log('authenticated: ' + handshakeData.roomId);
@@ -131,8 +147,9 @@ var Loby = io.of('/room').authorization(function(handshakeData,callback){
             accept(null,true);
          },
          fail:        function(data, message, error, accept){
-            if(error)
+            if(error){
                throw new Error(message);
+            }
 
             console.log('failed connection to socket.io:', message);
             accept(null, false);
@@ -143,12 +160,12 @@ var Loby = io.of('/room').authorization(function(handshakeData,callback){
          //main Logic
 
          socket.on('emit',function(msgData){
-            userData = socket.handshake.user;
+            var userData = socket.handshake.user;
             instantRoom.emit('emit',{ name : userData.displayName,image : userData.photos[0].value,msg : msgData });
          });
 
          socket.on('broadcast',function(msgData){
-            userData = socket.handshake.user;
+            var userData = socket.handshake.user;
             socket.broadcast.emit('broadcast',{ name : userData.displayName,image : userData.photos[0].value,msg : msgData });
          });
 
@@ -165,8 +182,8 @@ Loby.on('connection',function(socket){
 /*generate Hash String from Current Date + HandShake Data */
 function generateHashString(handshake){
    var currentDate = new Date();
-   var dateString = "" + currentDate.getFullYear()  + currentDate.getMonth() + currentDate.getDate();
-   dateString += "" + currentDate.getHours() + currentDate.getMinutes() + currentDate.getMilliseconds();
+   var dateString = '' + currentDate.getFullYear()  + currentDate.getMonth() + currentDate.getDate();
+   dateString += '' + currentDate.getHours() + currentDate.getMinutes() + currentDate.getMilliseconds();
    var sha1 = require('crypto').createHash('sha1');
 
    sha1.update(dateString + handshake.address.address);
