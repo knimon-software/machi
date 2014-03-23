@@ -3,7 +3,6 @@
 	"curly": true,
 	"freeze": true,
 	"immed": true,
-	"latedef": true,
 	"newcap": true,
 	"quotmark": "single",
 	"unused": true,
