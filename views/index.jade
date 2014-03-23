@@ -1,0 +1,11 @@
+extends layout
+
+block content
+   h1= title
+   p Welcome to #{title}
+   if(message)
+      p message
+   
+   <a href="/auth/twitter"> Sign in with Twitter</a>
+   br
+   a(href="/logout") logout 

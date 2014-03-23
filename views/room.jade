@@ -1,0 +1,26 @@
+extends layout
+
+block content
+   h1= title
+   button#getRoomId(type="button") Get roomID to Clipboard
+   
+   p#welcome Welcome to #{title}
+
+   div.media
+      a.pull-left(href="#")
+         img.media-object(src="#{userImage}")
+      div.media-body
+         h4 #{userName}
+   br
+   form
+      input#textArea(name="chat", type="text")
+      input#btn(type="button", value="sbumit")
+   
+   br
+
+   div#map-canvas(style="height:70%")
+   div.well#msgList(style="overflow:scroll; height:20%")
+
+   script(src="/socket.io/socket.io.js")
+   script(src="/javascripts/getLocation.js")
+   script(src="/javascripts/room.js")
