@@ -2,12 +2,6 @@
 # watson - inline issue manager
 # [goosecode] labs
 
-
-# Directories
-[dirs]
-./googkit/
-./test/
-
 # Tags
 [tags]
 fix
@@ -21,3 +15,6 @@ TAG: COMMENT
 # Ignores
 [ignore]
 node_modules/*
+.git/*
+.DS_Store
+Thumbs.db
