@@ -1,0 +1,23 @@
+# watson rc
+# watson - inline issue manager
+# [goosecode] labs
+
+
+# Directories
+[dirs]
+./googkit/
+./test/
+
+# Tags
+[tags]
+fix
+review
+todo
+
+# Tag format
+[tag_format]
+TAG: COMMENT
+
+# Ignores
+[ignore]
+node_modules/*
