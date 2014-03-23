@@ -1,6 +1,5 @@
 {
 	"eqeqeq": true,
-	"camelcase": true,
 	"curly": true,
 	"freeze": true,
 	"immed": true,
