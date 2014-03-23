@@ -3,11 +3,12 @@
 # [goosecode] labs
 
 # Directories
+[dirs]
 ./
 
 # Tags
 [tags]
-fix
+fixme
 review
 todo
 
