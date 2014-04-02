@@ -13,6 +13,9 @@ var passport = require('passport'),
     TwitterStrategy = require('passport-twitter').Strategy,
     GoogleStrategy  = require('passport-google').Strategy;
 
+//user Setting
+var _dammyImage = 'http://blog-imgs-24-origin.fc2.com/w/a/r/waraigun2/warai4.gif';
+
 passport.serializeUser(function(userInfo, done){
    done(null,userInfo);
 });
@@ -50,25 +53,31 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-//express configuration
+/*
+ * expressに関する設定
+ */
 var app = express();
-var MemoryStore = express.session.MemoryStore,
-    sessionStore = new MemoryStore();
+var sessionStore = new express.session.MemoryStore();
 
 app.configure(function(){
    app.set('port', process.env.PORT || 3000);
    app.set('views', __dirname + '/views');
    app.set('view engine', 'jade');
+
+   //FIXME: need to change secret key
+   app.set('secretKey', 'mySecret');
+   app.set('cookieSessionKey', 'sid');
    app.use(express.favicon());
    app.use(express.logger('dev'));
    app.use(express.bodyParser());
    app.use(express.methodOverride());
-   //session configuration
-   app.use(express.cookieParser());
-   //app.use(express.cookieParser("secret"));
+   //PassportとSocket.ioのためsession管理が必要なので、以下追記
+   app.use(express.cookieParser(app.get('secretKey')));
+   //FIXME: クッキーの暗号化処理に関して考えておく
    app.use(express.session({
-      secret: 'secretKey',
-      store: sessionStore
+      key   : app.get('cookieSessionKey'),
+      secret: app.get('secretKey'),
+      store : sessionStore
    }));
    app.use(passport.initialize());
    app.use(passport.session());
@@ -82,7 +91,10 @@ app.configure('development', function(){
    app.use(express.errorHandler());
 });
 
-//express routing
+/**
+ * expressルーティング処理
+ */
+
 app.get('/', routes.index); //index & login page
 
 //TwitterSignIn
@@ -92,14 +104,16 @@ app.get('/auth/twitter/callback',
 
 //Google SignIn
 app.get('/auth/google', passport.authenticate('google'));
-app.get('/auth/google/return', 
+app.get('/auth/google/return',
   passport.authenticate('google', { successRedirect: '/room', failureRedirect: '/' }));
 app.get('/logout', function(req, res){
    req.logout();
    res.redirect('/');
 });
 
-app.get('/room', isLogined, function(req,res){
+// checkBelongingRoomId,isLoginedの順番でチェックを行った後、/roomへルーティングする
+// ルーティングの際、クライアント側で表示するためにユーザー情報の一部を渡す
+app.get('/room', checkBelongingRoomId,isLogined, function(req,res){
    //res user profile
    res.render('room', {
       userName : req.user.displayName,
@@ -107,14 +121,23 @@ app.get('/room', isLogined, function(req,res){
    });
 });
 
-/* check authenticated */
-function isLogined(req, res, next){
-   //アクセス時にroomidが付加されている場合はクッキーに保存する
-   //FIXME: cookieを使わない方法に変えたい
+/**
+ * RoomIDを伴った、/roomへのアクセスである場合は、RoomIDをセッションに格納する
+ */
+function checkBelongingRoomId(req,res,next){
+   //アクセス時パラメータとしてIDを受け取っていればsessionに埋め込み
    if(req.query.id){
-      res.cookie('id', req.query.id);
+      console.log('roomAccess :' + req.sessionID);
+      req.session.roomId = req.query.id;
    }
 
+   return next();
+}
+
+/**
+ * ログインが行われていないアクセスの場合は`/`へリダイレクトをおこなう
+ */
+function isLogined(req, res, next){
    if(req.isAuthenticated()){
       return next();
    }
@@ -127,67 +150,151 @@ server.listen(app.get('port'), function(){
    console.log('Express server listening on port ' + app.get('port'));
 });
 
-//socket.io configuration
+//socket.ioに関する設定
+
+/**
+ * soket.io内部HandShakeにsession情報を埋め込む
+ *@param handshake HandShakeでーた
+ *@param sessionStore sessionStore
+ *@param callback socke.io.authorization内で指定しているcallback
+ *@return handshake HandShake + SessionData
+ */
+var addSessionData = function(handshake,sessionStore,callback){
+   //var cookie = require('cookie').parse(decodeURIComponent(handshake.headers.cookie));
+   //cookie = connect.utils.parseSignedCookies(cookie,'secretKey');
+   var cookieParser = express.cookieParser('secretKey');
+   cookieParser(handshake,{},function(err){
+      sessionStore.get(handshake.signedCookies['connect.sid'],function(err,session){
+         console.log(session);
+         if(err){
+            console.log(err);
+            callback(err.message,false);
+         }else if(!session){
+            console.log('session is not found');
+            callback('session is not found',false);
+         }else{
+            console.log(sessionId);
+            handshake.session = session;
+            return handshake;
+         }
+      });
+   });
+}
+
 var io = require('socket.io').listen(server),
-    passportSocketIo = require('passport.socketio'),
-    cookie = require('cookie');
+    passportSocketIo = require('passport.socketio');
 
-//クライアントからアクセスされてきたときにhandshakeDataにルームIDをセットするため処理
-//cookieにルームIDが設定されていなければ新規に部屋を作成
-//FIXME: cookieを使わない方法に変えたい
+/**
+ * クライアントからアクセスされてきたときにhandshakeDataにルームIDをセットするため処理 
+ * socket.ioにてセッション情報を利用するため、CookieのパースおよびSessionStoreからのget
+ */
 var Loby = io.of('/room').authorization(function(handshakeData,callback){
+   if (handshakeData.headers.cookie) {
+        var connect = require('connect');
+        //cookieを取得
+        var cookie = require('cookie').parse(decodeURIComponent(handshakeData.headers.cookie));
+        //cookie中の署名済みの値を元に戻す
+        cookie = connect.utils.parseSignedCookies(cookie, app.get('secretKey'));
+        //cookieからexpressのセッションIDを取得する
+        var sessionID = cookie[app.get('cookieSessionKey')];
+        // セッションデータをストレージから取得
+        sessionStore.get(sessionID, function(err, session) {
+            if (err) {
+                //セッションが取得できなかったら
+                console.dir(err);
+                callback(err.message, false);
+            }
+            else if (!session) {
+                console.log('session not found');
+                callback('session not found', false);
+            }
+            else {
+                console.log("authorization success");
+ 
+                // socket.ioからもセッションを参照できるようにする
+                handshakeData.cookie = cookie;
+                handshakeData.sessionID = sessionID;
+                handshakeData.sessionStore = sessionStore;
+                handshakeData.session = session//new Session(handshakeData, session);
+ 
+                callback(null, true);
+            }
+        });
+    }else{
+        //cookieが見つからなかった時
+        return callback('cookie not found', false);
+    }
+});
 
-   //指定がなければIDを作成
-   var id = cookie.parse(handshakeData.headers.cookie).id || generateHashString(handshakeData);
+Loby.on('connection', function(socket){
 
-   handshakeData.roomId=id;
+   //roomIDが指定されている接続の場合は使用し、そうでなければ作成
+   handshakeData = socket.handshake;
+
+   var id = handshakeData.session.roomId || generateHashString(handshakeData);
+
+   handshakeData.roomId = id;
    console.log('authenticated: ' + handshakeData.roomId);
-
+   
+   //部屋が作成されていない場合は、/roomへのアクセスがあった後動的に作成する
    if(!io.namespaces.hasOwnProperty('/room/' + id )){
-      //createRoom & shared session
-      var instantRoom = io.of('/room/' + id).authorization(passportSocketIo.authorize({
-         cookieParser: express.cookieParser,
-         key:         'connect.sid',
-         secret:      'secretKey',
-         store:       sessionStore,
-         success:     function(data,accept){
+      var onAuthorizeSuccess = function(data,accept){
             accept(null, true);
-         },
-         fail:        function(data, message, error, accept){
+      }
+
+      var onAuthorizeFail = function(data, message, error, accept){
             if(error){
                throw new Error(message);
             }
 
             console.log('failed connection to socket.io:', message);
             accept(null, false);
-         }
+      }
+
+      /**
+       * Clientから直接接続する個別のroom,Passportでの認証を利用する
+       * 各パラメータはexpressと同様のものを指定する(sucess,failureコールバック以外)
+       * @type {Object}
+       */
+      var instantRoom = io.of('/room/' + id).authorization(passportSocketIo.authorize({
+         cookieParser: express.cookieParser,
+         key:         app.get('cookieSessionKey'),
+         //FIXME: need to change secret key
+         secret:      app.get('secretKey'),
+         store:       sessionStore,
+         success:     onAuthorizeSuccess,
+         fail:        onAuthorizeFail
       }));
 
-      instantRoom.on('connection', function(socket){
-         //main Logic
 
+      instantRoom.on('connection', function(socket){
+         /**
+         * 以下それぞれクライアントからの意図的なブロードキャスト範囲を伴うイベントを処理する
+         * emitの場合は、送信元クライアントには送信されない
+         * broadcastの場合は、送信元を含むブロードキャストを行う
+         * @param {Object} msgData クライアントからのメッセージオブジェクト
+         */
          socket.on('emit', function(msgData){
             var userData = socket.handshake.user;
-            instantRoom.emit('emit', { name : userData.displayName, image : userData.photos[0].value, msg : msgData });
+            var userImage = !userData.hasOwnProperty('photos') ? _dammyImage : userData.photos[0].value;
+            instantRoom.emit('emit', { name : userData.displayName, image : userImage, msg : msgData });
          });
 
          socket.on('broadcast', function(msgData){
             var userData = socket.handshake.user;
-            socket.broadcast.emit('broadcast', { name : userData.displayName, image : userData.photos[0].value, msg : msgData });
+            var userImage = !userData.hasOwnProperty('photos') ? _dammyImage : userData.photos[0].value;
+            socket.broadcast.emit('broadcast', { name : userData.displayName, image : userImage, msg : msgData });
          });
-
       });
    }
 
-   callback(null, true);
-});
-
-Loby.on('connection', function(socket){
    socket.emit('roomId', socket.handshake.roomId);
 });
 
+
+
 /*generate Hash String from Current Date + HandShake Data */
-function generateHashString(handshake){
+var generateHashString = function(handshake){
    var currentDate = new Date();
    var dateString = '' + currentDate.getFullYear()  + currentDate.getMonth() + currentDate.getDate();
    dateString += '' + currentDate.getHours() + currentDate.getMinutes() + currentDate.getMilliseconds();
