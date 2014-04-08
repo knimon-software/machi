@@ -1,4 +1,5 @@
-var socket = io.connect('http://localhost:3000/room');
+const SERVER_ADDRESS = "http://" + location.host;
+var socket = io.connect(SERVER_ADDRESS + '/room');
 var locate = new LocationMapping();
 var roomId;
 
@@ -8,7 +9,7 @@ locate.init();
 socket.on('connect',function(){
    socket.on('roomId',function(data){
       roomId = data;
-      var instanceRoom = io.connect('http://localhost:3000/room/' + roomId);
+      var instanceRoom = io.connect(SERVER_ADDRESS + '/room/' + roomId);
       instanceRoom.on('connect',function(){
          instanceRoom.on('emit',function(msgData){
             displayChat(msgData.name,msgData.image,msgData.msg);

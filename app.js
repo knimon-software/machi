@@ -3,18 +3,21 @@
  * Module dependencies.
  */
 
+//App Const Setting
+//FIXME: ユーザー情報に画像イメージが含まれていない場合の画像を作成し、以下に指定すること
+const DAMMY_IMAGE = 'http://blog-imgs-24-origin.fc2.com/w/a/r/waraigun2/warai4.gif';
+const APP_ADDRESS  = process.env.ADDRESS || 'http://locaohost:5000';
+const APP_PORT = process.env.PORT || 5000;
+
 var express = require('express');
 var routes = require('./routes');
 var http = require('http');
 var path = require('path');
 
-// passport configuration
+//passport configuration
 var passport = require('passport'),
     TwitterStrategy = require('passport-twitter').Strategy,
     GoogleStrategy  = require('passport-google').Strategy;
-
-//user Setting
-var _dammyImage = 'http://blog-imgs-24-origin.fc2.com/w/a/r/waraigun2/warai4.gif';
 
 passport.serializeUser(function(userInfo, done){
    done(null,userInfo);
@@ -29,7 +32,7 @@ passport.use(new TwitterStrategy({
       //TODO: コンシューマキーの読み込みを別モジュールにすること
       consumerKey: process.env.TWITTER_CONSUMER_KEY,
       consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
-      callbackURL: 'http://localhost:3000/auth/twitter/callback'
+      callbackURL: APP_ADDRESS + '/auth/twitter/callback'
    },
    function(token, tokenSecret, profile, done){
       profile.twitter_token = token;
@@ -43,8 +46,8 @@ passport.use(new TwitterStrategy({
 
 //passport-googleSetting
 passport.use(new GoogleStrategy({
-   returnURL: 'http://localhost:3000/auth/google/return',
-    realm: 'http://localhost:3000/'
+   returnURL: APP_ADDRESS + '/auth/google/return',
+    realm: APP_ADDRESS
   },
   function(identifier, profile, done) {
       process.nextTick(function(){
@@ -60,7 +63,7 @@ var app = express();
 var sessionStore = new express.session.MemoryStore();
 
 app.configure(function(){
-   app.set('port', process.env.PORT || 3000);
+   app.set('port', process.env.PORT || 5000);
    app.set('views', __dirname + '/views');
    app.set('view engine', 'jade');
 
@@ -73,7 +76,6 @@ app.configure(function(){
    app.use(express.methodOverride());
    //PassportとSocket.ioのためsession管理が必要なので、以下追記
    app.use(express.cookieParser(app.get('secretKey')));
-   //FIXME: クッキーの暗号化処理に関して考えておく
    app.use(express.session({
       key   : app.get('cookieSessionKey'),
       secret: app.get('secretKey'),
@@ -151,36 +153,6 @@ server.listen(app.get('port'), function(){
 });
 
 //socket.ioに関する設定
-
-/**
- * soket.io内部HandShakeにsession情報を埋め込む
- *@param handshake HandShakeでーた
- *@param sessionStore sessionStore
- *@param callback socke.io.authorization内で指定しているcallback
- *@return handshake HandShake + SessionData
- */
-var addSessionData = function(handshake,sessionStore,callback){
-   //var cookie = require('cookie').parse(decodeURIComponent(handshake.headers.cookie));
-   //cookie = connect.utils.parseSignedCookies(cookie,'secretKey');
-   var cookieParser = express.cookieParser('secretKey');
-   cookieParser(handshake,{},function(err){
-      sessionStore.get(handshake.signedCookies['connect.sid'],function(err,session){
-         console.log(session);
-         if(err){
-            console.log(err);
-            callback(err.message,false);
-         }else if(!session){
-            console.log('session is not found');
-            callback('session is not found',false);
-         }else{
-            console.log(sessionId);
-            handshake.session = session;
-            return handshake;
-         }
-      });
-   });
-}
-
 var io = require('socket.io').listen(server),
     passportSocketIo = require('passport.socketio');
 
@@ -259,7 +231,6 @@ Loby.on('connection', function(socket){
       var instantRoom = io.of('/room/' + id).authorization(passportSocketIo.authorize({
          cookieParser: express.cookieParser,
          key:         app.get('cookieSessionKey'),
-         //FIXME: need to change secret key
          secret:      app.get('secretKey'),
          store:       sessionStore,
          success:     onAuthorizeSuccess,
@@ -276,13 +247,13 @@ Loby.on('connection', function(socket){
          */
          socket.on('emit', function(msgData){
             var userData = socket.handshake.user;
-            var userImage = !userData.hasOwnProperty('photos') ? _dammyImage : userData.photos[0].value;
+            var userImage = !userData.hasOwnProperty('photos') ? DAMMY_IMAGE : userData.photos[0].value;
             instantRoom.emit('emit', { name : userData.displayName, image : userImage, msg : msgData });
          });
 
          socket.on('broadcast', function(msgData){
             var userData = socket.handshake.user;
-            var userImage = !userData.hasOwnProperty('photos') ? _dammyImage : userData.photos[0].value;
+            var userImage = !userData.hasOwnProperty('photos') ? DAMMY_IMAGE : userData.photos[0].value;
             socket.broadcast.emit('broadcast', { name : userData.displayName, image : userImage, msg : msgData });
          });
       });
@@ -291,10 +262,13 @@ Loby.on('connection', function(socket){
    socket.emit('roomId', socket.handshake.roomId);
 });
 
-
-
-/*generate Hash String from Current Date + HandShake Data */
-var generateHashString = function(handshake){
+/**
+* roomIDを自動で生成する関数
+* SHA1(現在時刻+アクセス元IPアドレス)
+* @param {Object} socket.ioで使用しているhandshakeデータ
+* @return String SHA1で生成されたハッシュ値
+*/
+function generateHashString (handshake){
    var currentDate = new Date();
    var dateString = '' + currentDate.getFullYear()  + currentDate.getMonth() + currentDate.getDate();
    dateString += '' + currentDate.getHours() + currentDate.getMinutes() + currentDate.getMilliseconds();
