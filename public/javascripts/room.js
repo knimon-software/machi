@@ -34,7 +34,7 @@ socket.on('connect',function(){
 
 
       $('#getRoomId').click(function(e){
-         window.alert(location.href+ '?id=' + roomId);
+         window.alert(SERVER_ADDRESS + '/room?id=' + roomId);
       });
 
       $('#btn').click(function(e){

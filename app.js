@@ -119,7 +119,8 @@ app.get('/room', checkBelongingRoomId,isLogined, function(req,res){
    //res user profile
    res.render('room', {
       userName : req.user.displayName,
-      userImage : req.user.photos && req.user.photos.length > 0 ? req.user.photos[0]: null
+      //userImage : req.user.photos && req.user.photos.length > 0 ? req.user.photos[0]: null
+      userImage : !req.user.hasOwnProperty('photos') ? DAMMY_IMAGE : req.user.photos[0].value
    });
 });
 
