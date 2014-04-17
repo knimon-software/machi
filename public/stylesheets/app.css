@@ -1,0 +1,127 @@
+body, html, .container-fluid { 
+  height: 100%;
+}
+
+/*FIXME: */
+div.popover.fade.top.in {
+   width: 230px;
+}
+
+#map-canvas {
+   height: 60%;
+}
+
+#msgList {
+   height:30%;
+   overflow:scroll;
+}
+
+#userIcon {
+   width: 45px;
+   height: 45px;
+}
+
+i{
+    font-size: 1.3em;
+    color: inherit;
+}
+
+.navbar {
+   margin-bottom: 0px;
+}
+
+.navbar .navbar-inner {
+    padding: 0;
+}
+ 
+.navbar .nav {
+    margin: 0;
+    display: table;
+}
+ 
+.navbar .nav li a {
+   color: #ffffff;
+    text-align: left;
+}
+ 
+.navbar-default{
+   background-color: #393939;
+}
+
+.navbar-default .navbar-nav>li>a:hover{
+   color: #9E9D9D;
+}
+
+.navbar-default .navbar-nav>li>a.toCurrentPosition:hover{
+   color: #3392E1;
+}
+.navbar-default .navbar-nav>li>a.toDestination:hover{
+   color: #D44444;
+}
+
+.navbar-default .navbar-nav>li>a:hover, .navbar-default .navbar-nav>li>a:focus {
+   color: #ffffff;
+}
+
+/* Undo the collapsing navbar */
+.navbar-collapse {
+  display: block !important;
+  height: auto !important;
+  padding-bottom: 0;
+  overflow: visible !important;
+}
+
+.navbar-toggle {
+  display: none;
+}
+
+/* Always apply the floated nav */
+.navbar-nav {
+  float: left;
+  margin: 0;
+}
+.navbar-nav > li {
+  float: left;
+}
+.navbar-nav > li > a {
+  padding: 15px;
+}
+
+/* Redeclare since we override the float above */
+.navbar-nav.navbar-right {
+  float: right;
+}
+
+/* Undo custom dropdowns */
+.navbar .navbar-nav .open .dropdown-menu {
+  position: absolute;
+  float: left;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, .15);
+  border-width: 0 1px 1px;
+  border-radius: 0 0 4px 4px;
+  -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+          box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+}
+.navbar-default .navbar-nav .open .dropdown-menu > li > a {
+  color: #333;
+}
+.navbar .navbar-nav .open .dropdown-menu > li > a:hover,
+.navbar .navbar-nav .open .dropdown-menu > li > a:focus,
+.navbar .navbar-nav .open .dropdown-menu > .active > a,
+.navbar .navbar-nav .open .dropdown-menu > .active > a:hover,
+.navbar .navbar-nav .open .dropdown-menu > .active > a:focus {
+  color: #fff !important;
+  background-color: #428bca !important;
+}
+.navbar .navbar-nav .open .dropdown-menu > .disabled > a,
+.navbar .navbar-nav .open .dropdown-menu > .disabled > a:hover,
+.navbar .navbar-nav .open .dropdown-menu > .disabled > a:focus {
+  color: #999 !important;
+  background-color: transparent !important;
+}
+.up { bottom:100% !important; top:auto !important; }
+
+.modal-body {
+   word-wrap: break-word;
+}

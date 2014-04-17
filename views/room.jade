@@ -1,26 +1,78 @@
 extends layout
 
 block content
-   h1= title
-   button#getRoomId(type="button") Get roomID to Clipboard
-   
-   p#welcome Welcome to #{title}
+    #map-canvas
 
-   div.media
-      a.pull-left(href="#")
-         img.media-object(src="#{userImage}")
-      div.media-body
-         h4 #{userName}
-   br
-   form
-      input#textArea(name="chat", type="text")
-      input#btn(type="button", value="sbumit")
-   
-   br
+    nav.navbar.navbar-default(role='navigation')
+      .container-fluid
+        .navbar-collapse.collapse
+          ul.nav.navbar-nav
+            li
+              a.toCurrentPosition(href='#')
+                i.fa.fa-male
+                | My Location
+            li
+              a.toDestination(href='#', rel='tooltip', data-original-title='please click on Map,set the Destination')
+                i.fa.fa-map-marker
+                | Destination
+            li
+              canvas#userIcon(data-placement='top')
+            #popover-head.hide chat
+            #popover-content.hide
+              .input-group
+                input.form-control#textArea(type='text')
+                span.input-group-btn
+                  button.btn.btn-default#sendText(type='button') send
+          ul.nav.navbar-nav.navbar-right
+            li.dropdown
+              a.dropdown-toggle(href='#', data-toggle='dropdown')
+                i.fa.fa-bars
+              ul.dropdown-menu.pull-right
+                li
+                  a(href='/logout')
+                    i.fa.fa-sign-out
+                    | logout
+                li
+                  a.copyClipBoard(href='#', data-toggle='modal', data-target='#copyDialog')
+                    i.fa.fa-clipboard
+                    | copy roomid
+                li
+                  a.mapOnFull(href='#')
+                    i.fa.fa-caret-square-o-down
+                    | Mpa on Full
+                li
+                  a.chatOnFull(href='#')
+                    i.fa.fa-caret-square-o-up
+                    | Chat on Full
 
-   div#map-canvas(style="height:70%")
-   div.well#msgList(style="overflow:scroll; height:20%")
+    #msgList
+      table.table.table-bordered.table-striped
+        tbody
+    //
+       ########### Destination設定用ダイアログ ###########
+    #confirmDialog.modal.fade.confirmDialog(tabindex='-1', role='dialog', aria-labelledby='confirmDialog', aria-hidden='true')
+      .modal-dialog.modal-sm
+        .modal-content
+          .modal-header
+            h4.modal-title destination setting
+          .modal-body
+            p Would you set this point to the Destination?
+          .modal-footer
+            button.btn.btn-cancel(type='button', data-dismiss='modal') Cancel
+            button.btn.btn-apply(type='button') Apply
+    //
+       ########### roomID表示用設定用ダイアログ ###########
+    #copyDialog.modal.fade.confirmDialog(tabindex='-1', role='dialog', aria-labelledby='copyDialog', aria-hidden='true')
+      .modal-dialog.modal-sm
+        .modal-content
+          .modal-header
+            h4.modal-title copy roomID to Clipboard
+          .modal-body
+            p#displayRoomID
+          .modal-footer
+            button.btn.btn-ok(type='button', data-dismiss='modal') OK
 
-   script(src="/socket.io/socket.io.js")
-   script(src="/javascripts/getLocation.js")
-   script(src="/javascripts/room.js")
+block scripts
+   script(src='/socket.io/socket.io.js')
+   script(src='/javascripts/getLocation.js')
+   script(src='/javascripts/room.js')

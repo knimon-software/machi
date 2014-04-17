@@ -6,7 +6,7 @@
 //App Const Setting
 //FIXME: ユーザー情報に画像イメージが含まれていない場合の画像を作成し、以下に指定すること
 const DAMMY_IMAGE = 'http://blog-imgs-24-origin.fc2.com/w/a/r/waraigun2/warai4.gif';
-const APP_ADDRESS  = process.env.ADDRESS || 'http://locaohost:5000';
+const APP_ADDRESS  = process.env.ADDRESS || 'http://localhost:5000';
 const APP_PORT = process.env.PORT || 5000;
 
 var express = require('express');
@@ -37,6 +37,7 @@ passport.use(new TwitterStrategy({
    function(token, tokenSecret, profile, done){
       profile.twitter_token = token;
       profile.twitter_tokenSecret = tokenSecret;
+      profile = userImageGenerator(profile);
 
       process.nextTick(function() {
          done(null, profile);
@@ -50,11 +51,22 @@ passport.use(new GoogleStrategy({
     realm: APP_ADDRESS
   },
   function(identifier, profile, done) {
+      profile = userImageGenerator(profile);
       process.nextTick(function(){
          done(null, profile);
       });
   }
 ));
+
+function userImageGenerator(user){
+   //userphotoが設定されていない場合Google Chartで作成
+   if(!user.hasOwnProperty('photos')){
+      googleChart = 'https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.7|0|FF0000|15|b|' + user.displayName.charAt(0);
+      console.log(googleChart);
+      user.photos = [{value: googleChart}];
+   }
+   return user;
+}
 
 /*
  * expressに関する設定
@@ -114,14 +126,8 @@ app.get('/logout', function(req, res){
 });
 
 // checkBelongingRoomId,isLoginedの順番でチェックを行った後、/roomへルーティングする
-// ルーティングの際、クライアント側で表示するためにユーザー情報の一部を渡す
-app.get('/room', checkBelongingRoomId,isLogined, function(req,res){
-   //res user profile
-   res.render('room', {
-      userName : req.user.displayName,
-      //userImage : req.user.photos && req.user.photos.length > 0 ? req.user.photos[0]: null
-      userImage : !req.user.hasOwnProperty('photos') ? DAMMY_IMAGE : req.user.photos[0].value
-   });
+app.get('/room', checkBelongingRoomId,isLogined,function(req,res){
+   res.render('room');
 });
 
 /**
@@ -147,6 +153,73 @@ function isLogined(req, res, next){
 
    res.redirect('/');
 }
+
+app.get('/proxy', function(req,res){
+   var url, proxyReq, proxyRequest;
+
+   if (req.param('url')) {
+      url = require('url').parse(req.param('url'));
+      options = {
+         host: url.hostname,
+         port: '80',
+         path: url.pathname,
+         method: 'GET'
+      }
+
+      console.log(url);
+
+      //client = http.createClient(80, url.hostname);
+      proxyReq = http.request(options,function(proxyResponse){
+         proxyResponse.setEncoding('binary');
+         var type = proxyResponse.headers['content-type'],
+         prefix = 'data:' + type + ';base64,',
+         body = '',
+         success = true;
+
+         proxyResponse.on('data', function(chunk) {
+            if (proxyResponse.statusCode === 200) {
+               body += chunk;
+            } else {
+               res.statusCode = proxyResponse.statusCode;
+               body += chunk;
+               success = false;
+            }
+         });
+
+         proxyResponse.on('end', function() {
+            if (success) {
+               var base64 = new Buffer(body, 'binary').toString('base64'),
+                  data = prefix + base64,
+                  obj = {
+                     "src": url.href,
+                     "data": data
+                  };
+
+               res.contentType('application/json');
+               res.header("Access-Control-Allow-Origin", "*");
+               res.header("Access-Control-Allow-Headers", "X-Requested-With");
+               res.header("Access-Control-Allow-Methods", "GET,POST");
+
+               res.send(JSON.stringify(obj));
+            } else {
+               res.send(body);
+            }
+         });
+
+      });
+      proxyReq.on('error', function(err) {
+         console.log('error occ');
+         res.statusCode = 404;
+         res.send(err.message);
+      });
+      proxyReq.write('data\n');
+      proxyReq.write('data\n');
+      proxyReq.end();
+   }else{
+      res.statusCode=404;
+      res.send(err.message);
+   }
+});
 
 var server = http.createServer(app);
 server.listen(app.get('port'), function(){
@@ -240,27 +313,33 @@ Loby.on('connection', function(socket){
 
 
       instantRoom.on('connection', function(socket){
+         var userData = socket.handshake.user;
+         var userImage = !userData.hasOwnProperty('photos') ? DAMMY_IMAGE : userData.photos[0].value;
+
+         socket.emit('userInfo', { name : userData.displayName, image : userImage});
+
          /**
          * 以下それぞれクライアントからの意図的なブロードキャスト範囲を伴うイベントを処理する
          * emitの場合は、送信元クライアントには送信されない
          * broadcastの場合は、送信元を含むブロードキャストを行う
          * @param {Object} msgData クライアントからのメッセージオブジェクト
          */
+
          socket.on('emit', function(msgData){
-            var userData = socket.handshake.user;
-            var userImage = !userData.hasOwnProperty('photos') ? DAMMY_IMAGE : userData.photos[0].value;
             instantRoom.emit('emit', { name : userData.displayName, image : userImage, msg : msgData });
          });
 
          socket.on('broadcast', function(msgData){
-            var userData = socket.handshake.user;
-            var userImage = !userData.hasOwnProperty('photos') ? DAMMY_IMAGE : userData.photos[0].value;
             socket.broadcast.emit('broadcast', { name : userData.displayName, image : userImage, msg : msgData });
+         });
+
+         socket.on('destInfo', function(msgData){
+            instantRoom.emit('destInfo', msgData);
          });
       });
    }
-
-   socket.emit('roomId', socket.handshake.roomId);
+   
+   socket.emit('roomId', handshakeData.roomId);
 });
 
 /**
