@@ -2,6 +2,7 @@ extends layout
 
 block content
     #map-canvas
+    canvas#userIcon(data-placement='bottom')
 
     nav.navbar.navbar-default(role='navigation')
       .container-fluid
@@ -15,14 +16,6 @@ block content
               a.toDestination(href='#', rel='tooltip', data-original-title='please click on Map,set the Destination')
                 i.fa.fa-map-marker
                 | Destination
-            li
-              canvas#userIcon(data-placement='top')
-            #popover-head.hide chat
-            #popover-content.hide
-              .input-group
-                input.form-control#textArea(type='text')
-                span.input-group-btn
-                  button.btn.btn-default#sendText(type='button') send
           ul.nav.navbar-nav.navbar-right
             li.dropdown
               a.dropdown-toggle(href='#', data-toggle='dropdown')
@@ -71,6 +64,14 @@ block content
             p#displayRoomID
           .modal-footer
             button.btn.btn-ok(type='button', data-dismiss='modal') OK
+
+    #popover-head.hide chat
+    #popover-content.hide
+      .input-group
+        input.form-control#textArea(type='text')
+        span.input-group-btn
+          button.btn.btn-default#sendText(type='button') send
+
 
 block scripts
    script(src='/socket.io/socket.io.js')

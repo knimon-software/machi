@@ -19,6 +19,9 @@ div.popover.fade.top.in {
 #userIcon {
    width: 45px;
    height: 45px;
+   position: absolute;
+   left: 40px;
+   top:5px;
 }
 
 i{
@@ -97,6 +100,7 @@ i{
   position: absolute;
   float: left;
   border: 1px solid #ccc;
+  background-color:#fff;
   border: 1px solid rgba(0, 0, 0, .15);
   border-width: 0 1px 1px;
   border-radius: 0 0 4px 4px;

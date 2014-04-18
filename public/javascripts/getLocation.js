@@ -123,6 +123,7 @@ LocationMapping.prototype.setMarker = function(lat,lng,image,name){
    var that = this;
    if(that.marker.hasOwnProperty(name)){
       that.marker[name].setPosition(new google.maps.LatLng(lat,lng));
+      that.marker[name].setIcon(image);
    }else{
       that.addMarker(lat,lng,image,name);
    }
