@@ -112,7 +112,7 @@ $('.btn.btn-apply').click(function(e){
 });
 
 function setDestination(lat,lng){
-   if(locate.getMarkerPosition('dest') != null){
+   if(locate.getMarkerPosition('dest') !== null){
       locate.delMarker('dest');
    }
 
@@ -126,66 +126,67 @@ $('#confirmDialog').on('hidden.bs.modal',function(){
    locate.delMarker('tmp');
 });
 
-      $('.toCurrentPosition').click(function(e){
-         var latLng = locate.getCurrentPosition();
-         locate.forcusCurrentPosition = true;
-         locate.setCenterPosition(latLng.lat,latLng.lng);
-         });
-      $('.toDestination').click(function(e){
-         locate.forcusCurrentPosition = false;
-         if(destPos == null){
-         $(this).tooltip({placement: 'top',trigger: 'manual'}).tooltip('show');
-         }else{
-         locate.setCenterPosition(destPos.lat,destPos.lng);
-         }
-         });
+$('.toCurrentPosition').click(function(e){
+   var latLng = locate.getCurrentPosition();
+   locate.forcusCurrentPosition = true;
+   locate.setCenterPosition(latLng.lat,latLng.lng);
+});
 
-      $('.mapOnFull').click(function(e){
-         var checkIcon = $('<i>',{class :'fa fa-check-square'});
+$('.toDestination').click(function(e){
+   locate.forcusCurrentPosition = false;
+   if(destPos == null){
+      $(this).tooltip({placement: 'top',trigger: 'manual'}).tooltip('show');
+   }else{
+      locate.setCenterPosition(destPos.lat,destPos.lng);
+   }
+});
 
-         if(flgMapFull == 0 && flgChatFull!= 0) {
-         //chatFullを解除した後Mapfull
-         $("a.chatOnFull").children("i.fa.fa-check-square").remove();
-         flgChatFull=0;
-         }else if(flgMapFull != 0){
-         $("a.mapOnFull").children("i.fa.fa-check-square").remove();
-         $('ul.dropdown-menu.pull-right.up').removeClass('up');
-         flgMapFull=0;
-         $('#msgList').css('height','30%');
-         $('#map-canvas').css('height','60%');
-         return;
-         }
+$('.mapOnFull').click(function(e){
+   var checkIcon = $('<i>',{class :'fa fa-check-square'});
 
-         $('a.mapOnFull').append(checkIcon);
-         //dropdownMenu -> up
-         $('ul.dropdown-menu.pull-right').addClass('up');
-         //画面サイズ変更
-         $('#map-canvas').css('height','90%');
-         $('#msgList').css('height','0%');
-         flgMapFull=1;
-      });
+   if(flgMapFull == 0 && flgChatFull!= 0) {
+      //chatFullを解除した後Mapfull
+      $("a.chatOnFull").children("i.fa.fa-check-square").remove();
+      flgChatFull=0;
+   }else if(flgMapFull != 0){
+      $("a.mapOnFull").children("i.fa.fa-check-square").remove();
+      $('ul.dropdown-menu.pull-right.up').removeClass('up');
+      flgMapFull=0;
+      $('#msgList').css('height','30%');
+      $('#map-canvas').css('height','60%');
+      return;
+   }
+
+   $('a.mapOnFull').append(checkIcon);
+   //dropdownMenu -> up
+   $('ul.dropdown-menu.pull-right').addClass('up');
+   //画面サイズ変更
+   $('#map-canvas').css('height','90%');
+   $('#msgList').css('height','0%');
+   flgMapFull=1;
+});
 
 $('.chatOnFull').click(function(e){
-      var checkIcon = $('<i>',{class :'fa fa-check-square'});
+   var checkIcon = $('<i>',{class :'fa fa-check-square'});
 
-      if(flgChatFull == 0 && flgMapFull!= 0) {
+   if(flgChatFull == 0 && flgMapFull!= 0) {
       //mapFullを解除した後chatfull
       $("a.mapOnFull").children("i.fa.fa-check-square").remove();
       $('ul.dropdown-menu.pull-right.up').removeClass('up');
       flgMapFull=0;
-      }else if(flgChatFull != 0){
+   }else if(flgChatFull != 0){
       $("a.chatOnFull").children("i.fa.fa-check-square").remove();
       flgChatFull=0;
       $('#msgList').css('height','30%');
       $('#map-canvas').css('height','60%');
       return;
-      }
+   }
 
-      $('a.chatOnFull').append(checkIcon);
-      //画面サイズ変更
-      $('#msgList').css('height','90%');
-      $('#map-canvas').css('height','0%');
-      flgChatFull=1;
+   $('a.chatOnFull').append(checkIcon);
+   //画面サイズ変更
+   $('#msgList').css('height','90%');
+   $('#map-canvas').css('height','0%');
+   flgChatFull=1;
 });
 
 //SendButton対応
@@ -239,11 +240,11 @@ function setUserIcon(imageSrc){
           ctx.drawImage(img, 0, 0, 45, 45);
           $('#userIcon').popover({ 
              html : true,
-             title: function() {
-                return $("#popover-head").html();
-             },
+             //title: function() {
+              //  return $('#popover-head').html();
+             //},
              content: function() {
-                return $("#popover-content").html();
+                return $('#popover-content').html();
              }
           });
           userImage = canvas.toDataURL();

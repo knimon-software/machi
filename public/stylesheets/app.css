@@ -1,4 +1,5 @@
 body, html, .container-fluid { 
+   font-size:12px;
   height: 100%;
 }
 
@@ -30,6 +31,7 @@ i{
 }
 
 .navbar {
+   min-height: 40px;
    margin-bottom: 0px;
 }
 
@@ -49,6 +51,10 @@ i{
  
 .navbar-default{
    background-color: #393939;
+}
+
+.navbar-nav .open .dropdown-menu>li>a{
+   line-height:0px;
 }
 
 .navbar-default .navbar-nav>li>a:hover{
@@ -86,9 +92,6 @@ i{
 .navbar-nav > li {
   float: left;
 }
-.navbar-nav > li > a {
-  padding: 15px;
-}
 
 /* Redeclare since we override the float above */
 .navbar-nav.navbar-right {
@@ -97,6 +100,7 @@ i{
 
 /* Undo custom dropdowns */
 .navbar .navbar-nav .open .dropdown-menu {
+  font-size: 12px;
   position: absolute;
   float: left;
   border: 1px solid #ccc;
@@ -128,4 +132,22 @@ i{
 
 .modal-body {
    word-wrap: break-word;
+}
+
+.media-heading {
+   margin: 0 0 2px;
+   font-size: 12px;
+}
+
+.media>a>img{
+   width: 30px;
+   height: 30px;
+}
+
+h3.popover-title{
+   font-size: 12px;
+}
+
+.popover-content{
+   padding:5px 5px;
 }
