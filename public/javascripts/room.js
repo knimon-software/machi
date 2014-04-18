@@ -1,4 +1,5 @@
 const SERVER_ADDRESS = "http://" + location.host;
+const ENTER_MESSAGE = 'enter the room';
 var socket = io.connect(SERVER_ADDRESS + '/room');
 var locate = new LocationMapping();
 var userName,userImage;
@@ -61,6 +62,11 @@ socket.on('connect',function(){
       instanceRoomSocket.on('connect', function(){
          //chatメッセージ受信
          instanceRoomSocket.on('emit', function(msgData){
+            //入室メッセージだったらDestination情報の共有を行う
+            //FIXME: このままだと受け取ったクライアントすべてが送信する
+            if(msgData.msg == ENTER_MESSAGE && destPos !== null){
+               instanceRoomSocket.emit('destInfo',{lat:destPos.lat, lng: destPos.lng});
+            }
             displayChat(msgData.name, msgData.image, msgData.msg);
          });
          
@@ -75,6 +81,7 @@ socket.on('connect',function(){
          });
 
          instanceRoomSocket.on('destInfo', function(msgData){
+            console.log('recv: destInfo');
             setDestination(msgData.lat, msgData.lng);
          });
       });
@@ -99,7 +106,6 @@ google.maps.event.addListener(locate.map, 'longpress', function(e){
       $('#confirmDialog').modal('show');
 });
 
-//FIXME: あとで、OKのときのみDestination設定、ほかはなんもしない用にしておくこと
 $('.btn.btn-cancel').click(function(e){
       $('#confirmDialog').modal('hide');
 });
@@ -108,7 +114,7 @@ $('.btn.btn-apply').click(function(e){
    destPos = locate.getMarkerPosition('tmp');
    setDestination(destPos.lat, destPos.lng);
    $('#confirmDialog').modal('hide');
-   instanceRoomSocket.emit('destInfo',{lat:destPos.lat, lng: destPos.lng,});
+   instanceRoomSocket.emit('destInfo',{lat:destPos.lat, lng: destPos.lng});
 });
 
 function setDestination(lat,lng){

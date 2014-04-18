@@ -8,6 +8,7 @@
 const DAMMY_IMAGE = 'http://blog-imgs-24-origin.fc2.com/w/a/r/waraigun2/warai4.gif';
 const APP_ADDRESS  = process.env.ADDRESS || 'http://localhost:5000';
 const APP_PORT = process.env.PORT || 5000;
+const ENTER_MESSAGE = 'enter the room';
 
 var express = require('express');
 var routes = require('./routes');
@@ -317,11 +318,11 @@ Loby.on('connection', function(socket){
          var userImage = !userData.hasOwnProperty('photos') ? DAMMY_IMAGE : userData.photos[0].value;
 
          socket.emit('userInfo', { name : userData.displayName, image : userImage});
-
+         instantRoom.emit('emit', { name : userData.displayName, image : userImage, msg:ENTER_MESSAGE});
          /**
          * 以下それぞれクライアントからの意図的なブロードキャスト範囲を伴うイベントを処理する
-         * emitの場合は、送信元クライアントには送信されない
-         * broadcastの場合は、送信元を含むブロードキャストを行う
+         * broadcastの場合は、送信元クライアントには送信されない
+         * emitの場合は、送信元を含むブロードキャストを行う
          * @param {Object} msgData クライアントからのメッセージオブジェクト
          */
 
@@ -334,7 +335,7 @@ Loby.on('connection', function(socket){
          });
 
          socket.on('destInfo', function(msgData){
-            instantRoom.emit('destInfo', msgData);
+            socket.broadcast.emit('destInfo', msgData);
          });
       });
    }
