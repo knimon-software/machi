@@ -12,6 +12,10 @@ div.popover.fade.top.in {
    height: 60%;
 }
 
+#chatBar {
+   display: none;
+}
+
 #msgList {
    height:30%;
    overflow:scroll;
@@ -21,8 +25,8 @@ div.popover.fade.top.in {
    width: 45px;
    height: 45px;
    position: absolute;
-   left: 40px;
-   top:5px;
+   left: 80px;
+   top:10px;
 }
 
 i{

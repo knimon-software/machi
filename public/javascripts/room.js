@@ -152,14 +152,16 @@ $('.mapOnFull').click(function(e){
 
    if(flgMapFull == 0 && flgChatFull!= 0) {
       //chatFullを解除した後Mapfull
-      $("a.chatOnFull").children("i.fa.fa-check-square").remove();
+      $('#userIcon').toggle();         //userIconの表示
+      $('a.chatOnFull').children('i.fa.fa-check-square').remove();
+      $('#chatBar').hide();
       flgChatFull=0;
    }else if(flgMapFull != 0){
       $("a.mapOnFull").children("i.fa.fa-check-square").remove();
       $('ul.dropdown-menu.pull-right.up').removeClass('up');
       flgMapFull=0;
-      $('#msgList').css('height','30%');
       $('#map-canvas').css('height','60%');
+      $('#msgList').css('height','30%');
       return;
    }
 
@@ -175,6 +177,8 @@ $('.mapOnFull').click(function(e){
 $('.chatOnFull').click(function(e){
    var checkIcon = $('<i>',{class :'fa fa-check-square'});
 
+   //map上ユーザーアイコン（チャット用)の表示・非表示切り替え
+   $('#userIcon').toggle();
    if(flgChatFull == 0 && flgMapFull!= 0) {
       //mapFullを解除した後chatfull
       $("a.mapOnFull").children("i.fa.fa-check-square").remove();
@@ -183,14 +187,15 @@ $('.chatOnFull').click(function(e){
    }else if(flgChatFull != 0){
       $("a.chatOnFull").children("i.fa.fa-check-square").remove();
       flgChatFull=0;
+      $('#chatBar').hide();
       $('#msgList').css('height','30%');
       $('#map-canvas').css('height','60%');
       return;
    }
-
+   $('#chatBar').show();
    $('a.chatOnFull').append(checkIcon);
    //画面サイズ変更
-   $('#msgList').css('height','90%');
+   $('#msgList').css('height','85%');
    $('#map-canvas').css('height','0%');
    flgChatFull=1;
 });
