@@ -1,0 +1,17 @@
+{
+   "serverSetting" : {
+      "address" : "",
+      "port"    : ""
+   },
+   "appSetting" : {
+      "sessionSecretKey"         : "",
+      "twitterConsumerKey"       : "",
+      "twitterConsumerSecret"    : "",
+      "facebookAppID"            : "",
+      "facebookAppSecret"        : "",
+      "enterMessage"             : ""
+   }
+}
+
+
+

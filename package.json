@@ -9,10 +9,12 @@
     "express": "3.4.7",
     "connect": "*",
     "cookie": "*",
+    "config" : "*",
     "jade": "*",
     "socket.io": "*",
     "passport": "*",
     "passport-twitter": "*",
+    "passport-facebook": "*",
     "passport-google": "*",
     "passport.socketio": "*"
   },

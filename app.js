@@ -2,23 +2,25 @@
 /**
  * Module dependencies.
  */
+var express = require('express');
+var routes  = require('./routes');
+var http    = require('http');
+var path    = require('path');
+var CONFIG  = require('config');
 
 //App Const Setting
 //FIXME: ユーザー情報に画像イメージが含まれていない場合の画像を作成し、以下に指定すること
-const DAMMY_IMAGE = 'http://blog-imgs-24-origin.fc2.com/w/a/r/waraigun2/warai4.gif';
-const APP_ADDRESS  = process.env.ADDRESS || 'http://localhost:5000';
-const APP_PORT = process.env.PORT || 5000;
-const ENTER_MESSAGE = 'enter the room';
-
-var express = require('express');
-var routes = require('./routes');
-var http = require('http');
-var path = require('path');
+var DAMMY_IMAGE = 'http://blog-imgs-24-origin.fc2.com/w/a/r/waraigun2/warai4.gif';
+var APP_ADDRESS   = CONFIG.serverSetting.address || 'http://localhost:5000';
+var APP_PORT      = CONFIG.serverSetting.port || 5000;
+var SESSION_KEY   = CONFIG.appSetting.sessionSecretKey || 'secretKey';
+var ENTER_MESSAGE = CONFIG.appSetting.enterMessage || 'enter the room';
 
 //passport configuration
-var passport = require('passport'),
-    TwitterStrategy = require('passport-twitter').Strategy,
-    GoogleStrategy  = require('passport-google').Strategy;
+var passport         = require('passport'),
+    TwitterStrategy  = require('passport-twitter').Strategy,
+    FacebookStrategy = require('passport-facebook').Strategy,
+    GoogleStrategy   = require('passport-google').Strategy;
 
 passport.serializeUser(function(userInfo, done){
    done(null,userInfo);
@@ -30,20 +32,33 @@ passport.deserializeUser(function(userInfo, done){
 
 // passport-twitterSetting
 passport.use(new TwitterStrategy({
-      //TODO: コンシューマキーの読み込みを別モジュールにすること
-      consumerKey: process.env.TWITTER_CONSUMER_KEY,
-      consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
-      callbackURL: APP_ADDRESS + '/auth/twitter/callback'
+      consumerKey   : CONFIG.appSetting.twitterConsumerKey,
+      consumerSecret: CONFIG.appSetting.twitterConsumerSecret,
+      callbackURL   : APP_ADDRESS + '/auth/twitter/callback'
    },
    function(token, tokenSecret, profile, done){
       profile.twitter_token = token;
       profile.twitter_tokenSecret = tokenSecret;
-      profile = userImageGenerator(profile);
 
       process.nextTick(function() {
-         done(null, profile);
+         return done(null, profile);
       });
    }
+));
+
+//passport-facebookSetting
+passport.use(new FacebookStrategy({
+    clientID     : CONFIG.appSetting.facebookAppID,
+    clientSecret : CONFIG.appSetting.facebookAppSecret,
+    callbackURL  : APP_ADDRESS + '/auth/facebook/callback',
+    profileFields: ['id', 'displayName', 'photos']
+  },
+  function(accessToken, refreshToken, profile, done) {
+    process.nextTick(function () {
+      
+      return done(null, profile);
+    });
+  }
 ));
 
 //passport-googleSetting
@@ -52,22 +67,11 @@ passport.use(new GoogleStrategy({
     realm: APP_ADDRESS
   },
   function(identifier, profile, done) {
-      profile = userImageGenerator(profile);
       process.nextTick(function(){
          done(null, profile);
       });
   }
 ));
-
-function userImageGenerator(user){
-   //userphotoが設定されていない場合Google Chartで作成
-   if(!user.hasOwnProperty('photos')){
-      googleChart = 'https://chart.googleapis.com/chart?chst=d_map_spin&chld=0.7|0|FF0000|15|b|' + user.displayName.charAt(0);
-      console.log(googleChart);
-      user.photos = [{value: googleChart}];
-   }
-   return user;
-}
 
 /*
  * expressに関する設定
@@ -76,12 +80,12 @@ var app = express();
 var sessionStore = new express.session.MemoryStore();
 
 app.configure(function(){
-   app.set('port', process.env.PORT || 5000);
+   app.set('port', APP_PORT);
    app.set('views', __dirname + '/views');
    app.set('view engine', 'jade');
 
    //FIXME: need to change secret key
-   app.set('secretKey', 'mySecret');
+   app.set('secretKey', SESSION_KEY);
    app.set('cookieSessionKey', 'sid');
    app.use(express.favicon());
    app.use(express.logger('dev'));
@@ -116,6 +120,11 @@ app.get('/', routes.index); //index & login page
 app.get('/auth/twitter', passport.authenticate('twitter'));
 app.get('/auth/twitter/callback',
    passport.authenticate('twitter', { successRedirect: '/room', failureRedirect: '/'}));
+
+//facebookSignIn
+app.get('/auth/facebook', passport.authenticate('facebook'));
+app.get('/auth/facebook/callback',
+   passport.authenticate('facebook', { successRedirect: '/room', failureRedirect: '/'}));
 
 //Google SignIn
 app.get('/auth/google', passport.authenticate('google'));
@@ -156,20 +165,19 @@ function isLogined(req, res, next){
 }
 
 app.get('/proxy', function(req,res){
-   var url, proxyReq, proxyRequest;
+   var url, proxyReq;
 
    if (req.param('url')) {
       url = require('url').parse(req.param('url'));
-      options = {
+      var options = {
          host: url.hostname,
          port: '80',
          path: url.pathname,
          method: 'GET'
-      }
+      };
 
       console.log(url);
 
-      //client = http.createClient(80, url.hostname);
       proxyReq = http.request(options,function(proxyResponse){
          proxyResponse.setEncoding('binary');
          var type = proxyResponse.headers['content-type'],
@@ -192,14 +200,14 @@ app.get('/proxy', function(req,res){
                var base64 = new Buffer(body, 'binary').toString('base64'),
                   data = prefix + base64,
                   obj = {
-                     "src": url.href,
-                     "data": data
+                     'src': url.href,
+                     'data': data
                   };
 
                res.contentType('application/json');
-               res.header("Access-Control-Allow-Origin", "*");
-               res.header("Access-Control-Allow-Headers", "X-Requested-With");
-               res.header("Access-Control-Allow-Methods", "GET,POST");
+               res.header('Access-Control-Allow-Origin', '*');
+               res.header('Access-Control-Allow-Headers', 'X-Requested-With');
+               res.header('Access-Control-Allow-Methods', 'GET,POST');
 
                res.send(JSON.stringify(obj));
             } else {
@@ -216,9 +224,6 @@ app.get('/proxy', function(req,res){
       proxyReq.write('data\n');
       proxyReq.write('data\n');
       proxyReq.end();
-   }else{
-      res.statusCode=404;
-      res.send(err.message);
    }
 });
 
@@ -256,13 +261,13 @@ var Loby = io.of('/room').authorization(function(handshakeData,callback){
                 callback('session not found', false);
             }
             else {
-                console.log("authorization success");
+                console.log('authorization success');
  
                 // socket.ioからもセッションを参照できるようにする
                 handshakeData.cookie = cookie;
                 handshakeData.sessionID = sessionID;
                 handshakeData.sessionStore = sessionStore;
-                handshakeData.session = session//new Session(handshakeData, session);
+                handshakeData.session = session;
  
                 callback(null, true);
             }
@@ -276,7 +281,7 @@ var Loby = io.of('/room').authorization(function(handshakeData,callback){
 Loby.on('connection', function(socket){
 
    //roomIDが指定されている接続の場合は使用し、そうでなければ作成
-   handshakeData = socket.handshake;
+   var handshakeData = socket.handshake;
 
    var id = handshakeData.session.roomId || generateHashString(handshakeData);
 
@@ -287,7 +292,7 @@ Loby.on('connection', function(socket){
    if(!io.namespaces.hasOwnProperty('/room/' + id )){
       var onAuthorizeSuccess = function(data,accept){
             accept(null, true);
-      }
+      };
 
       var onAuthorizeFail = function(data, message, error, accept){
             if(error){
@@ -296,7 +301,7 @@ Loby.on('connection', function(socket){
 
             console.log('failed connection to socket.io:', message);
             accept(null, false);
-      }
+      };
 
       /**
        * Clientから直接接続する個別のroom,Passportでの認証を利用する
