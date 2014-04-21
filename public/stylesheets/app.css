@@ -3,6 +3,15 @@ body, html, .container-fluid {
   height: 100%;
 }
 
+#imageWrapper {
+   display: table;
+   height: 100%;
+}
+#imageWrapper .image {
+   display: table-cell;
+   vertical-align: middle;
+}
+
 /*FIXME: */
 div.popover.fade.top.in {
    width: 230px;
@@ -25,7 +34,7 @@ div.popover.fade.top.in {
    width: 45px;
    height: 45px;
    position: absolute;
-   left: 80px;
+   left: 65px;
    top:10px;
 }
 
@@ -37,6 +46,7 @@ i{
 .navbar {
    min-height: 40px;
    margin-bottom: 0px;
+   line-height: 0px;
 }
 
 .navbar .navbar-inner {
@@ -58,7 +68,7 @@ i{
 }
 
 .navbar-nav .open .dropdown-menu>li>a{
-   line-height:0px;
+   line-height: 0px;
 }
 
 .navbar-default .navbar-nav>li>a:hover{

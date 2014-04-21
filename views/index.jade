@@ -1,11 +1,10 @@
 extends layout
 
 block content
-   h1= title
-   p Welcome to #{title}
-   if(message)
-      p message
-   
-   <a href="/auth/twitter"> Sign in with Twitter</a>
-   br
-   a(href="/logout") logout 
+   #imageWrapper.center-block
+       p.image
+           img(src='images/topImage.png', usemap='#top')
+         map(name='top')
+           area(shape='rect', coords='136,215,184,173', href='./auth/facebook')
+           area(shape='rect', coords='136,144,184,97', href='./auth/twitter')
+

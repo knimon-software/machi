@@ -6,7 +6,7 @@ var LocationMapping = function() {
    //forcus center at current position every update to currentposition
    this.forcusCurrentPosition = true;
 
-   this.init = function() {
+   this.init = function(errorCallback) {
 
       //initialCenter
       var initLatLng = new google.maps.LatLng(this.curPos.lat, this.curPos.lng);
@@ -33,7 +33,7 @@ var LocationMapping = function() {
           draggable: true
       });
 
-      this.getCurrentLocation();
+      this.watchCurrentLocation(errorCallback);
    };
 };
 
@@ -42,7 +42,7 @@ LocationMapping.prototype.getCurrentPosition = function(){
    return that.curPos;
 }
 
-LocationMapping.prototype.getCurrentLocation = function() {
+LocationMapping.prototype.watchCurrentLocation = function(errorCallback) {
    var that = this;
 
    if (navigator.geolocation) {
@@ -85,11 +85,12 @@ LocationMapping.prototype.getCurrentLocation = function() {
                      message = '位置情報取得中にタイムアウトしました。';
                      break;
                }
-               window.alert(message);
+               errorCallback(message);
             }
       );
    }else {
       //GeoLocation disable
+      errorCallback('GeoLocation disable');
    }
 };
 

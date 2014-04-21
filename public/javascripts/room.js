@@ -1,9 +1,8 @@
-const SERVER_ADDRESS = "http://" + location.host;
-const ENTER_MESSAGE = 'enter the room';
+var SERVER_ADDRESS = 'http://' + location.host;
+var ENTER_MESSAGE = 'enter the room';
 var socket = io.connect(SERVER_ADDRESS + '/room');
 var locate = new LocationMapping();
-var userName,userImage;
-var roomId;
+var userImage;
 
 var destPos = null;
 var flgMapFull=0;
@@ -13,7 +12,7 @@ var instanceRoomSocket=null;
 
 //------------------------GoogleMap Setting-------------------------
 /*show the googleMap*/
-locate.init();
+locate.init(function(err){console.log(err);});
 
 /*google LongPressEvent Add*/
 function LongPress(map, length) {
@@ -31,9 +30,9 @@ function LongPress(map, length) {
   google.maps.event.addListener(map,'drag', function(e) {
     that.onMapDrag_(e);
   });
-};
+}
 
-LongPress.prototype.onMouseUp_ = function(e) {
+LongPress.prototype.onMouseUp_ = function() {
   clearTimeout(this.timeoutId_);
 };
 
@@ -46,7 +45,7 @@ LongPress.prototype.onMouseDown_ = function(e) {
   }, this.length_);
 };
 
-LongPress.prototype.onMapDrag_ = function(e) {
+LongPress.prototype.onMapDrag_ = function() {
   //移動中はfocus onにしない
   locate.forcusCurrentPosition = false;
   clearTimeout(this.timeoutId_);
@@ -55,7 +54,7 @@ LongPress.prototype.onMapDrag_ = function(e) {
 //------------------------SocketIO Setting-------------------------
 socket.on('connect',function(){
    socket.on('roomId',function(data){
-      roomId = data;
+      var roomId = data;
 
       instanceRoomSocket = io.connect(SERVER_ADDRESS + '/room/' + roomId);
 
@@ -64,7 +63,7 @@ socket.on('connect',function(){
          instanceRoomSocket.on('emit', function(msgData){
             //入室メッセージだったらDestination情報の共有を行う
             //FIXME: このままだと受け取ったクライアントすべてが送信する
-            if(msgData.msg == ENTER_MESSAGE && destPos !== null){
+            if(msgData.msg === ENTER_MESSAGE && destPos !== null){
                instanceRoomSocket.emit('destInfo',{lat:destPos.lat, lng: destPos.lng});
             }
             displayChat(msgData.name, msgData.image, msgData.msg);
@@ -101,16 +100,16 @@ socket.on('connect',function(){
 new LongPress(locate.map,1500);
 
 // クリックした場所にマーカーを追加 
-google.maps.event.addListener(locate.map, 'longpress', function(e){ 
+google.maps.event.addListener(locate.map, 'longpress', function(e){
       locate.addMarker(e.latLng.lat(), e.latLng.lng(), 'http://labs.google.com/ridefinder/images/mm_20_red.png','tmp');
       $('#confirmDialog').modal('show');
 });
 
-$('.btn.btn-cancel').click(function(e){
+$('.btn.btn-cancel').click(function(){
       $('#confirmDialog').modal('hide');
 });
 
-$('.btn.btn-apply').click(function(e){
+$('.btn.btn-apply').click(function(){
    destPos = locate.getMarkerPosition('tmp');
    setDestination(destPos.lat, destPos.lng);
    $('#confirmDialog').modal('hide');
@@ -132,32 +131,32 @@ $('#confirmDialog').on('hidden.bs.modal',function(){
    locate.delMarker('tmp');
 });
 
-$('.toCurrentPosition').click(function(e){
+$('.toCurrentPosition').click(function(){
    var latLng = locate.getCurrentPosition();
    locate.forcusCurrentPosition = true;
    locate.setCenterPosition(latLng.lat,latLng.lng);
 });
 
-$('.toDestination').click(function(e){
+$('.toDestination').click(function(){
    locate.forcusCurrentPosition = false;
-   if(destPos == null){
+   if(destPos === null){
       $(this).tooltip({placement: 'top',trigger: 'manual'}).tooltip('show');
    }else{
       locate.setCenterPosition(destPos.lat,destPos.lng);
    }
 });
 
-$('.mapOnFull').click(function(e){
+$('.mapOnFull').click(function(){
    var checkIcon = $('<i>',{class :'fa fa-check-square'});
 
-   if(flgMapFull == 0 && flgChatFull!= 0) {
+   if(flgMapFull === 0 && flgChatFull!== 0) {
       //chatFullを解除した後Mapfull
       $('#userIcon').toggle();         //userIconの表示
       $('a.chatOnFull').children('i.fa.fa-check-square').remove();
       $('#chatBar').hide();
       flgChatFull=0;
-   }else if(flgMapFull != 0){
-      $("a.mapOnFull").children("i.fa.fa-check-square").remove();
+   }else if(flgMapFull !== 0){
+      $('a.mapOnFull').children('i.fa.fa-check-square').remove();
       $('ul.dropdown-menu.pull-right.up').removeClass('up');
       flgMapFull=0;
       $('#map-canvas').css('height','60%');
@@ -165,27 +164,30 @@ $('.mapOnFull').click(function(e){
       return;
    }
 
-   $('a.mapOnFull').append(checkIcon);
    //dropdownMenu -> up
    $('ul.dropdown-menu.pull-right').addClass('up');
+   $('a.mapOnFull').append(checkIcon);
+
+   $('ul.dropdown-menu.pull-right').dropdown('refresh');
+
    //画面サイズ変更
-   $('#map-canvas').css('height','90%');
    $('#msgList').css('height','0%');
+   $('#map-canvas').css('height','90%');
    flgMapFull=1;
 });
 
-$('.chatOnFull').click(function(e){
+$('.chatOnFull').click(function(){
    var checkIcon = $('<i>',{class :'fa fa-check-square'});
 
    //map上ユーザーアイコン（チャット用)の表示・非表示切り替え
    $('#userIcon').toggle();
-   if(flgChatFull == 0 && flgMapFull!= 0) {
+   if(flgChatFull === 0 && flgMapFull!== 0) {
       //mapFullを解除した後chatfull
-      $("a.mapOnFull").children("i.fa.fa-check-square").remove();
+      $('a.mapOnFull').children('i.fa.fa-check-square').remove();
       $('ul.dropdown-menu.pull-right.up').removeClass('up');
       flgMapFull=0;
-   }else if(flgChatFull != 0){
-      $("a.chatOnFull").children("i.fa.fa-check-square").remove();
+   }else if(flgChatFull !== 0){
+      $('a.chatOnFull').children('i.fa.fa-check-square').remove();
       flgChatFull=0;
       $('#chatBar').hide();
       $('#msgList').css('height','30%');
@@ -195,8 +197,8 @@ $('.chatOnFull').click(function(e){
    $('#chatBar').show();
    $('a.chatOnFull').append(checkIcon);
    //画面サイズ変更
-   $('#msgList').css('height','85%');
    $('#map-canvas').css('height','0%');
+   $('#msgList').css('height','85%');
    flgChatFull=1;
 });
 
@@ -204,8 +206,10 @@ $('.chatOnFull').click(function(e){
 var sendMessage = function(){
    if(instanceRoomSocket !== null){
       var msg = $('#textArea').val();
-      $('#textArea').val('').focus();
-      instanceRoomSocket.emit('emit',msg);
+      if(msg !== ''){
+         $('#textArea').val('').focus();
+         instanceRoomSocket.emit('emit',msg);
+      }
    }
 };
 
@@ -249,11 +253,8 @@ function setUserIcon(imageSrc){
        var img = new Image();
        img.onload = function() {
           ctx.drawImage(img, 0, 0, 45, 45);
-          $('#userIcon').popover({ 
+          $('#userIcon').popover({
              html : true,
-             //title: function() {
-              //  return $('#popover-head').html();
-             //},
              content: function() {
                 return $('#popover-content').html();
              }
