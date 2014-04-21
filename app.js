@@ -12,7 +12,7 @@ var CONFIG  = require('config');
 //FIXME: ユーザー情報に画像イメージが含まれていない場合の画像を作成し、以下に指定すること
 var DAMMY_IMAGE = 'http://blog-imgs-24-origin.fc2.com/w/a/r/waraigun2/warai4.gif';
 var APP_ADDRESS   = CONFIG.serverSetting.address || 'http://localhost:5000';
-var APP_PORT      = CONFIG.serverSetting.port || 5000;
+var APP_PORT      =  process.env.PORT | CONFIG.serverSetting.port || 3000;
 var SESSION_KEY   = CONFIG.appSetting.sessionSecretKey || 'secretKey';
 var ENTER_MESSAGE = CONFIG.appSetting.enterMessage || 'enter the room';
 
@@ -84,7 +84,6 @@ app.configure(function(){
    app.set('views', __dirname + '/views');
    app.set('view engine', 'jade');
 
-   //FIXME: need to change secret key
    app.set('secretKey', SESSION_KEY);
    app.set('cookieSessionKey', 'sid');
    app.use(express.favicon());

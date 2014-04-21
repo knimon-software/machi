@@ -168,8 +168,6 @@ $('.mapOnFull').click(function(){
    $('ul.dropdown-menu.pull-right').addClass('up');
    $('a.mapOnFull').append(checkIcon);
 
-   $('ul.dropdown-menu.pull-right').dropdown('refresh');
-
    //画面サイズ変更
    $('#msgList').css('height','0%');
    $('#map-canvas').css('height','90%');
