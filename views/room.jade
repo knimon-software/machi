@@ -13,7 +13,7 @@ block content
                 i.fa.fa-male
                 | My Location
             li
-              a.toDestination(href='#', rel='tooltip', data-original-title='please click on Map,set the Destination')
+              a.toDestination(href='#', rel='tooltip', data-original-title='マップをタップして目的地を設定しましょう')
                 i.fa.fa-map-marker
                 | Destination
           ul.nav.navbar-nav.navbar-right
@@ -28,15 +28,15 @@ block content
                 li
                   a.copyClipBoard(href='#', data-toggle='modal', data-target='#copyDialog')
                     i.fa.fa-clipboard
-                    | copy roomid
+                    | URL表示
                 li
                   a.mapOnFull(href='#')
                     i.fa.fa-caret-square-o-down
-                    | Mpa on Full 
+                    | Map拡大 
                 li
                   a.chatOnFull(href='#')
                     i.fa.fa-caret-square-o-up
-                    | Chat on Full 
+                    | Chat拡大 
 
     #chatBar
       .input-group
@@ -55,7 +55,7 @@ block content
           .modal-header
             h4.modal-title destination setting
           .modal-body
-            p Would you set this point to the Destination?
+            p 指定したポイントを目的地に設定しますか？
           .modal-footer
             button.btn.btn-cancel(type='button', data-dismiss='modal') Cancel
             button.btn.btn-apply(type='button') Apply
@@ -65,7 +65,7 @@ block content
       .modal-dialog.modal-sm
         .modal-content
           .modal-header
-            h4.modal-title copy roomID to Clipboard
+            h4.modal-title 以下のURLをシェアして待ち合わせを開始しましょう
           .modal-body
             p#displayRoomID
           .modal-footer

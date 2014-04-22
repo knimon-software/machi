@@ -91,6 +91,7 @@ socket.on('connect',function(){
       },3000);
       var roomURL = $('<a>').html(SERVER_ADDRESS + '/room?id=' + roomId);
       $('#displayRoomID').append(roomURL);
+      $('#copyDialog').modal('show');
    });
 });
 

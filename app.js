@@ -11,8 +11,8 @@ var CONFIG  = require('config');
 //App Const Setting
 //FIXME: ユーザー情報に画像イメージが含まれていない場合の画像を作成し、以下に指定すること
 var DAMMY_IMAGE = 'http://blog-imgs-24-origin.fc2.com/w/a/r/waraigun2/warai4.gif';
-var APP_ADDRESS   = CONFIG.serverSetting.address || 'http://localhost:5000';
 var APP_PORT      =  process.env.PORT | CONFIG.serverSetting.port || 3000;
+var APP_ADDRESS   = CONFIG.serverSetting.address || 'http://localhost:' + APP_PORT;
 var SESSION_KEY   = CONFIG.appSetting.sessionSecretKey || 'secretKey';
 var ENTER_MESSAGE = CONFIG.appSetting.enterMessage || 'enter the room';
 
